@@ -7,13 +7,19 @@ const typeInput = document.querySelector("#type-input");
 const prompt = "Tyler is the best software developer to ever live I think he is spectacular dapper young man";
 const words = [];
 let currentWordIndex = 0;
-let correctCharacters = "";
-let incorrectCharacters = "";
+let greenCharacters = "";
+let redCharacters = "";
 let finishedWords = "";
 let points = 0;
 
 // Event Listeners
-typeInput.addEventListener("keyup", checkIfCorrect);
+typeInput.addEventListener("keydown", () => { // Runs each time the user enters a new value into the input field
+    checkIfCorrect(typeInput.value);
+});
+typeInput.addEventListener("keyup", () => {
+    checkIfCorrect(typeInput.value);
+});
+
 // Functions
 promptDisplay.innerHTML = prompt;
 gameStart();
@@ -22,51 +28,51 @@ function gameStart() {
     separateWords();
 }
 function gameEnd() {
-    promptDisplay.innerHTML = `<span class="correct">${prompt}</span>`;
     typeInput.value = "";
     progressBar.style.backgroundColor = "green";
     console.log("You win!");
 }
-function checkIfCorrect() {
-    correctCharacters = finishedWords;
-    incorrectCharacters = "";
-    let incorrectBool = false;
+function checkIfCorrect(userInput) {
+    greenCharacters = finishedWords; // Sets the words that will be highlighted green to the words that have already been finished
+    redCharacters = ""; // Incorrect characters are reset each time the function runs
 
-    if (currentWordIndex + 1 === words.length && typeInput.value === words[currentWordIndex]) {
-        correctCharacters = typeInput.value;
-        updateProgress();
-        return gameEnd();
-    }
+    let incorrectBool = false; // Flag that will be enabled each time an incorrect input is entered which will render subsequent characters incorrect
 
-    else if (typeInput.value === words[currentWordIndex] + " ") {
-        finishedWords += typeInput.value;
-        correctCharacters = finishedWords;
-        console.log({ finishedWords });
-        currentWordIndex++;
+    if (currentWordIndex + 1 === words.length && userInput === words[currentWordIndex]) { // Checks if the player has correctly type the last word
+        finishedWords += userInput;
+        greenCharacters = finishedWords;
         handleChange("correct");
-        updateProgress();
-        typeInput.value = "";
-        console.log("Next word!");
-        console.log(words[currentWordIndex]);
+        updateProgress(userInput);
+        gameEnd();
         return;
     }
 
-    if (typeInput.value.length === 0) {
+    if (userInput === words[currentWordIndex] + " ") { // Checks if the user has finished a word
+        typeInput.value = "";
+        finishedWords += userInput; // The user's input is added to the list of completed words
+        greenCharacters = finishedWords; // The letters to be highlighted green are updated to the completed words
+        currentWordIndex++;
+        handleChange("correct");
+        updateProgress(userInput);
+        return;
+    }
+
+    if (userInput.length === 0) {
         handleChange();
     }
 
-    for (let i = 0; i < typeInput.value.length; i++) {
-        if (typeInput.value[i] === words[currentWordIndex][i] && !incorrectBool && typeInput.value <= words[currentWordIndex]) {
-            correctCharacters += typeInput.value[i];
+    for (let i = 0; i < userInput.length; i++) {
+        if (userInput[i] === words[currentWordIndex][i] && !incorrectBool && userInput <= words[currentWordIndex]) {
+            greenCharacters += userInput[i];
             handleChange("correct");
         }
 
         else {
-            if (i > words[currentWordIndex].length || typeInput.value.length > words[currentWordIndex]) {
+            if (i > words[currentWordIndex].length || userInput.length > words[currentWordIndex]) {
                 return;
             }
             incorrectBool = true;
-            incorrectCharacters += prompt[(correctCharacters.length) + incorrectCharacters.length];
+            redCharacters += prompt[(greenCharacters.length) + redCharacters.length];
             handleChange("incorrect");
         }
     }
@@ -74,15 +80,15 @@ function checkIfCorrect() {
 function handleChange(result) {
     let remainingCharacters = "";
 
-    for (let i = correctCharacters.length + incorrectCharacters.length; i < prompt.length; i++) {
+    for (let i = greenCharacters.length + redCharacters.length; i < prompt.length; i++) {
         remainingCharacters += prompt[i];
     }
 
     if (result === "correct") {
-        promptDisplay.innerHTML = `<span class="correct">${correctCharacters}</span>${remainingCharacters}`;
+        promptDisplay.innerHTML = `<span class="correct">${greenCharacters}</span>${remainingCharacters}`;
     }
     else {
-        promptDisplay.innerHTML = `<span class="correct">${correctCharacters}</span><span class="incorrect">${incorrectCharacters}</span>${remainingCharacters}`;
+        promptDisplay.innerHTML = `<span class="correct">${greenCharacters}</span><span class="incorrect">${redCharacters}</span>${remainingCharacters}`;
     }
 }
 
@@ -100,8 +106,9 @@ function separateWords() {
     words.push(wordToProcess);
 }
 
-function updateProgress() {
-    points += typeInput.value.length;
+// Updates the progress bar
+function updateProgress(userInput) {
+    points += userInput.length;
     console.log(`${(points / prompt.length) * 100}%`);
     progressBar.style.width = `${(points / prompt.length) * 100}%`;
 }
